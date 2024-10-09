@@ -1,0 +1,11 @@
+caddy.local {
+	root /usr/share/caddy
+     file_server
+	tls caddy.local
+	tls /var/caddy.local.pem /var/caddy.local-key.pem
+}
+
+localhost:8080 {
+	respond "Hello, Caddy!"
+	tls /var/caddy.local.pem /var/caddy.local-key.pem
+}

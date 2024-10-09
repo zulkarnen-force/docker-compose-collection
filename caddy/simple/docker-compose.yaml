@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./site:/usr/share/caddy
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy.local-key.pem:/var/caddy.local-key.pem
+      - ./caddy.local.pem:/var/caddy.local.pem
+    environment:
+      - ACME_AGREE=true
