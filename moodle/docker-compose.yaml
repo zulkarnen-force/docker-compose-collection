@@ -1,0 +1,37 @@
+services:
+  mariadb:
+    image: bitnami/mariadb
+    container_name: mariadboke
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+      MARIADB_USER: bn_moodle
+      MARIADB_PASSWORD: bitnami
+      MARIADB_DATABASE: bitnami_moodle
+    volumes:
+      - mariadb_data:/var/lib/mysql
+  moodle:
+    image: bitnami/moodle
+    container_name: moodle
+    environment:
+      MOODLE_USERNAME: programster
+      MOODLE_PASSWORD: thisIsMyMoodleLoginPassword
+      MOODLE_EMAIL: admin@programster.org
+      MOODLE_DATABASE_HOST: mariadb
+      MOODLE_DATABASE_PORT_NUMBER: 3306
+      MOODLE_DATABASE_USER: bn_moodle
+      MOODLE_DATABASE_PASSWORD: bitnami
+      MOODLE_DATABASE_NAME: bitnami_moodle
+      ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - 8080:8080
+      - 8443:8443
+    volumes:
+      - ./moodle_data:/bitnami/moodledata
+      - ./moodle:/bitnami/moodle
+    depends_on:
+      - mariadb
+volumes:
+  mariadb_data:
+    driver: local
+  moodle_data:
+    driver: local
