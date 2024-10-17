@@ -1,0 +1,22 @@
+services:
+  multsite.migration.db:
+    image: mysql:5.7
+    container_name: multsite.migration.db
+    restart: "unless-stopped"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: muhammadiyah-web
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./data:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: multsite.migration.db
+      PMA_PORT: 3306
+    depends_on:
+      - multsite.migration.db
