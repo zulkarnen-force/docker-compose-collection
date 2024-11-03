@@ -1,0 +1,17 @@
+networks:
+  default:
+    name: myservice.network
+    external: true
+
+services:
+  app:
+    image: myservice
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    container_name: myservice
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+    restart: always
