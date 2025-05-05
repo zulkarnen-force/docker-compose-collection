@@ -1,0 +1,23 @@
+name: rspku
+services:
+  wp_rspku:
+    image: wordpress:6.7.2
+    container_name: wp_rspku
+    ports:
+      - "8000:80"
+    environment:
+      WORDPRESS_DB_HOST: wp_rspku_db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wppassword
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ./wordpress:/var/www/html
+  wp_rspku_db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: wppassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wppassword
+    volumes:
+      - ./mysql:/var/lib/mysql
