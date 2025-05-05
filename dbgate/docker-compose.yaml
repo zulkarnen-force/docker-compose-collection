@@ -1,0 +1,21 @@
+networks:
+  default:
+    name: nginx_net
+    external: true
+services:
+  dbgate:
+    image: dbgate/dbgate:6.4.1-alpine
+    volumes:
+      - ./data:/root/.dbgate
+    environment:
+      CONNECTIONS: con1,con2
+      LABEL_con1: Sungate
+      SERVER_con1: sungate-db
+      USER_con1: sunhouse_sungate
+      PASSWORD_con1: sungate@121
+      PORT_con1: 3306
+      ENGINE_con1: mysql@dbgate-plugin-mysql
+
+      LABEL_con2: RentalizeMongoDBStaging
+      URL_con2: mongodb://root:root@rentalize.db.staging:27017/rentalize?authSource=admin
+      ENGINE_con2: mongo@dbgate-plugin-mongo
