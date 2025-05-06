@@ -1,0 +1,13 @@
+services:
+  rentalize.db:
+    image: mongodb/mongodb-community-server:latest
+    container_name: rentalize.db
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: root
+      MONGODB_INITDB_ROOT_PASSWORD: supersecret
+      MONGODB_INITDB_DATABASE: rentalize
+    volumes:
+      - ./data:/data/db
+    command: ["mongod", "--bind_ip_all"]
+    networks:
+      - default
