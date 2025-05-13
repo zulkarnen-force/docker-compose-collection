@@ -1,0 +1,13 @@
+services:
+  eventmu.db:
+    image: mongo:7.0
+    container_name: eventmu.db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: supersecret
+      MONGO_INITDB_DATABASE: eventmu
+    volumes:
+      - ./data:/data/db
+    command: ["mongod", "--bind_ip_all"]
+    networks:
+      - default
