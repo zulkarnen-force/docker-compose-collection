@@ -1,0 +1,81 @@
+version: "3"
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  loki_data:
+
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: always
+    networks:
+      - default
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "30000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana_db:/var/lib/grafana
+    restart: always
+    networks:
+      - default
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--web.listen-address=:9100"
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+      - "--collector.filesystem.ignored-mount-points='^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'"
+    networks:
+      - default
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  loki:
+    image: grafana/loki:3.3.2
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./loki:/etc/loki
+      - loki_data:/loki
+    networks:
+      - default
+
+
+  promtail:
+    image: grafana/promtail:3.2.2
+    container_name: promtail
+    volumes:
+      - ./promtail/config.yaml:/etc/promtail/config.yaml
+      - /var/log/nginx:/var/log/nginx
+      - /var/log:/var/log
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - default
