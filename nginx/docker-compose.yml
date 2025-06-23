@@ -1,0 +1,19 @@
+networks:
+  default:
+    name: nginx_net
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"    # HTTP
+      - "443:443"  # HTTPS
+    volumes:
+      - ./conf.d:/etc/nginx/conf.d/  # Nginx config
+      - ./ssl:/etc/nginx/ssl/               # SSL certificates
+      - ./logs:/var/log/nginx
+      - ./letsencrypt:/etc/letsencrypt
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - default
