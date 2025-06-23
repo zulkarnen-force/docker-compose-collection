@@ -1,0 +1,15 @@
+networks:
+  default:
+    name: nginx_net
+    external: true
+
+services:
+  rentalize.app:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    image: ${IMAGE_NAME}
+    container_name: rentalize.app.${TARGET}
+    restart: always
+    networks:
+      - default
