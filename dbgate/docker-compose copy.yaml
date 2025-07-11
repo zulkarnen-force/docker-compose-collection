@@ -1,0 +1,16 @@
+networks:
+  default:
+    driver: bridge
+services:
+  dbgate:
+    image: dbgate/dbgate:6.4.1-alpine
+    volumes:
+      - ./data:/root/.dbgate
+    environment:
+      CONNECTIONS: con2
+      LABEL_con2: DOM
+      SERVER_con2: ormu.db
+      USER_con2: root
+      PASSWORD_con2: root
+      PORT_con2: 5432
+      ENGINE_con2: postgres@dbgate-plugin-postgres

@@ -15,7 +15,15 @@ services:
       PASSWORD_con1: sungate@121
       PORT_con1: 3306
       ENGINE_con1: mysql@dbgate-plugin-mysql
-
       LABEL_con2: RentalizeMongoDBStaging
       URL_con2: mongodb://root:root@rentalize.db.staging:27017/rentalize?authSource=admin
       ENGINE_con2: mongo@dbgate-plugin-mongo
+      LOGIN: admin
+      PASSWORD: mypasswordISsecure
+      CONNECTIONS: con1
+      LABEL_con1: KTAM
+      SERVER_con1: ktam-db
+      USER_con1: postgres
+      PASSWORD_con1: supersecret
+      PORT_con1: 5432
+      ENGINE_con1: postgres@dbgate-plugin-postgres
