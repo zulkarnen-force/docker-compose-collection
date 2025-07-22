@@ -1,0 +1,15 @@
+version: "3.8"
+
+name: "phpmyadmin"
+
+services:
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    network_mode: host
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=localhost
+      - PMA_PORT=3306
+      - APACHE_PORT=30080
