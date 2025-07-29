@@ -16,11 +16,11 @@ scrape_configs:
       - targets:
           - localhost
         labels:
-          __path__: /var/www/html/*/application/logs/log-*.php
+          __path__: /var/www/html/app1/application/logs/log-*.php
           hostname: ${HOSTNAME}
+          app_name: app1
 
     pipeline_stages:
-      # Extract severity, timestamp, message
       - regex:
           expression: '^(?P<severity>ERROR|INFO|DEBUG|WARNING) - (?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) --> (?P<message>.*)$'
       - labels:
@@ -30,10 +30,3 @@ scrape_configs:
           format: "2006-01-02 15:04:05"
       - output:
           source: message
-
-      # Extract app_name from __path__
-      - regex:
-          expression: "/var/www/html/(?P<app_name>[^/]+)/application/logs/.*"
-          source: __path__
-      - labels:
-          app_name:
