@@ -1,0 +1,39 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchsize: 1000
+    batchwait: 2s
+
+scrape_configs:
+  - job_name: codeigniter_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          __path__: /var/www/html/*/application/logs/log-*.php
+          hostname: ${HOSTNAME}
+
+    pipeline_stages:
+      # Extract severity, timestamp, message
+      - regex:
+          expression: '^(?P<severity>ERROR|INFO|DEBUG|WARNING) - (?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) --> (?P<message>.*)$'
+      - labels:
+          severity:
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02 15:04:05"
+      - output:
+          source: message
+
+      # Extract app_name from __path__
+      - regex:
+          expression: "/var/www/html/(?P<app_name>[^/]+)/application/logs/.*"
+          source: __path__
+      - labels:
+          app_name:
