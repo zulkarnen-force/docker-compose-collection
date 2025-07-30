@@ -9,6 +9,7 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
     batchsize: 1000
     batchwait: 2s
+    drop_rate_limited_batches: true
 
 scrape_configs:
   - job_name: codeigniter_logs
@@ -17,7 +18,7 @@ scrape_configs:
           - localhost
         labels:
           __path__: /var/www/html/app1/application/logs/log-*.php
-          hostname: ${HOSTNAME}
+          hostname: examplehostname
           app_name: app1
 
     pipeline_stages:
@@ -28,5 +29,25 @@ scrape_configs:
       - timestamp:
           source: timestamp
           format: "2006-01-02 15:04:05"
+          location: Asia/Jakarta
+      - tenant:
+          value: default
+      - match:
+          selector: '{severity="INFO"}'
+          stages:
+            - drop:
+                expression: "Helper loaded: .*"
+            - drop:
+                expression: "Language file loaded: .*"
+            - drop:
+                expression: "Controller Class Initialized"
+            - drop:
+                expression: "Model Class Initialized"
+            - drop:
+                expression: "Pagination Class Initialized"
+            - drop:
+                expression: "File loaded: .*"
+            - drop:
+                expression: "Final output sent to browser"
       - output:
           source: message

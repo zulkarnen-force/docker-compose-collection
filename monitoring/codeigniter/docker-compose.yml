@@ -3,14 +3,15 @@ version: "3"
 services:
   loki:
     image: grafana/loki:2.9.3
+    container_name: ci-loki
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
-    volumes:
       - ./loki-config.yaml:/etc/loki/loki-config.yaml
 
   promtail:
     image: grafana/promtail:2.9.3
+    container_name: ci-promtail
     volumes:
       - /var/log:/var/log
       - /home/zulkarnen/Developments/sotabar-update:/var/www/html/app1:ro
@@ -19,12 +20,14 @@ services:
 
   grafana:
     image: grafana/grafana:10.4.2
+    container_name: ci-grafana
     ports:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning/datasources
       - grafana-storage:/var/lib/grafana
 
 volumes:
