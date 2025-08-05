@@ -1,0 +1,87 @@
+bname: "Server Sitama"
+
+services:
+  portainer:
+    image: portainer/portainer-ce:alpine
+    container_name: monitoring-portainer
+    depends_on:
+      - traefik
+    restart: unless-stopped
+    env_file: .env.merged
+    networks:
+      - sitama
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer:/data
+    labels:
+      traefik.enable: true
+      traefik.http.routers.server-portainer.rule: Host(`${PORTAINER_URL}`)
+      traefik.http.routers.server-portainer.entrypoints: websecure
+      traefik.http.routers.server-portainer.tls: "true"
+      traefik.http.routers.server-portainer.tls.certresolver: letsencrypt
+      traefik.http.routers.server-portainer.service: server-portainer
+      traefik.http.services.server-portainer.loadbalancer.server.port: "9000"
+  
+  traefik:
+    image: traefik:latest
+    container_name: proxy-traefik
+    restart: unless-stopped
+    env_file: .env.merged
+    networks:
+      - sitama
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml
+      - ./traefik/letsencrypt:/letsencrypt:rw
+      - ./traefik/cloudflare:/cloudflare
+    labels:
+      traefik.enable: true
+      traefik.http.routers.dashboard.rule: Host(${TRAEFIK_URL})
+      traefik.http.routers.dashboard.entrypoints: websecure
+      traefik.http.routers.dashboard.service: api@internal
+      traefik.http.routers.dashboard.tls: true
+      traefik.http.routers.dashboard.tls.certresolver: letsencrypt
+      traefik.http.routers.dashboard.middlewares: auth
+      traefik.http.services.dashboard.loadbalancer.server.port: "8080"
+      # traefik.http.middlewares.auth.basicauth.users: "${TRAEFIK_BASIC_AUTH}"
+
+  nats:
+    image: nats:latest
+    container_name: nats-server
+    env_file: .env.merged
+    depends_on:
+      - traefik
+    networks:
+      - sitama
+    # ports:
+    #   - 4222:4222
+    #   - 8222:8222
+    #   - 6222:6222
+    command: ["-c", "/etc/nats/nats.conf"]
+    volumes:
+      - nats:/data
+      - ./nats/server-master.conf:/etc/nats/nats.conf
+    labels:
+      traefik.enable: true
+      traefik.tcp.routers.server-natsio.rule: HostSNI(`${NATSIO_URL}`)
+      traefik.tcp.routers.server-natsio.entrypoints: websecure
+      traefik.tcp.routers.server-natsio.tls: "true"
+      traefik.tcp.routers.server-natsio.tls.certresolver: letsencrypt
+      traefik.tcp.routers.server-natsio.service: server-natsio
+      traefik.tcp.services.server-natsio.loadbalancer.server.port: "4222"
+      traefik.http.routers.websocket-natsio.rule: Host(`${NATSIO_URL}`)
+      traefik.http.routers.websocket-natsio.entrypoints: websecure
+      traefik.http.routers.websocket-natsio.service: websocket-natsio
+      traefik.http.routers.websocket-natsio.tls: true
+      traefik.http.routers.websocket-natsio.tls.certresolver: letsencrypt
+      traefik.http.services.websocket-natsio.loadbalancer.server.port: "8080"
+
+networks:
+  sitama:
+    external: true
+volumes:
+  portainer:
+  nats:

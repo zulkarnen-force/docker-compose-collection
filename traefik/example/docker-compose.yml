@@ -1,0 +1,38 @@
+name: "Muhammadiyah - SITAMA"
+
+services:
+  web-app:
+    image: registry.gitlab.com/faridsurya/sitama/web-app:latest
+    container_name: sitama-web-app
+    networks:
+      - sitama
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: sitama
+      traefik.http.routers.webapp-service.entrypoints: websecure
+      traefik.http.routers.webapp-service.tls: "true"
+      traefik.http.routers.webapp-service.tls.certresolver: letsencrypt
+      traefik.http.routers.webapp-service.rule: Host(`${SITAMA_WEBAPP_URL}`)
+      traefik.http.routers.webapp-service.service: webapp-service
+      traefik.http.services.webapp-service.loadbalancer.server.port: "3000"
+
+  web-admin:
+    image: registry.gitlab.com/faridsurya/sitama/web-admin:latest
+    container_name: sitama-web-admin
+    environment:
+      PORT: 3001
+    networks:
+      - sitama
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: sitama
+      traefik.http.routers.webadmin-service.entrypoints: websecure
+      traefik.http.routers.webadmin-service.tls: "true"
+      traefik.http.routers.webadmin-service.tls.certresolver: letsencrypt
+      traefik.http.routers.webadmin-service.rule: Host(`${SITAMA_WEBADMIN_URL}`)
+      traefik.http.routers.webadmin-service.service: webadmin-service
+      traefik.http.services.webadmin-service.loadbalancer.server.port: "3001"
+
+networks:
+  sitama:
+    external: true
