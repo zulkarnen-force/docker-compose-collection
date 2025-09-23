@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:10.11
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ./db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MARIADB_ROOT_PASSWORD} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  wordpress:
+    # Stays on WordPress v6 line + PHP 8.2, stable & update-friendly
+    image: wordpress:6-php8.2-apache
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      # Extra wp-config.php directives (auto-injected by the image)
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'https://web.rentalize.id');
+        define('WP_SITEURL', 'https://web.rentalize.id');
+        define('FS_METHOD', 'direct');
+        define('FORCE_SSL_ADMIN', true);
+    volumes:
+      # Persist full WP dir (core, plugins, themes, uploads)
+      - ./wordpress:/var/www/html
+    expose:
+      - "80"  # only for other containers; not published to host
+    networks:
+      - internal
+      - edge
+
+volumes:
+  db_data:
+  wp_data:
+
+networks:
+  internal:
+    driver: bridge
+  edge:
+    external: true
+    name: nginx_net

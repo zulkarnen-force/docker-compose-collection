@@ -1,9 +1,9 @@
-name: "Muhammadiyah - SITAMA"
+name: "Muhammadiyah - SITAMA (Dev)"
 
 services:
   web-app:
     image: registry.gitlab.com/faridsurya/sitama/web-app:latest
-    container_name: sitama-web-app
+    container_name: sitama-web-app-dev
     networks:
       - sitama
     labels:

@@ -1,3 +1,6 @@
 data/
 node_modules/
 minio/uploads/
+wordpress-migration-webhosting/wp_data/
+wordpress-migration-webhosting/tabligh.sql
+traefik/letsencrypt/acme.json

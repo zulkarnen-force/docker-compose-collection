@@ -1,0 +1,89 @@
+version: "3.9"
+
+name: "WordPress - Tabligh"
+
+networks:
+  sitama:
+    external: true
+
+services:
+  db:
+    image: mariadb:11.4
+    container_name: tabligh-db
+    restart: unless-stopped
+    environment:
+      - MARIADB_DATABASE=${DB_NAME}
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_AUTO_UPGRADE=1
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./db_data:/var/lib/mysql
+    networks: [sitama]
+
+  wordpress:
+    image: wordpress:php8.2-apache
+    container_name: tabligh-wp
+    restart: unless-stopped
+    depends_on: [db]
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_NAME=${DB_NAME}
+      - WORDPRESS_DB_USER=${DB_USER}
+      - WORDPRESS_DB_PASSWORD=${DB_PASSWORD}
+      - WORDPRESS_TABLE_PREFIX=${DB_PREFIX}
+      - WORDPRESS_DEBUG=0
+    volumes:
+      - ./wp_data:/var/www/html
+      - ./php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+    networks:
+      - sitama
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: sitama
+      traefik.http.routers.wordpress-dev.entrypoints: websecure
+      traefik.http.routers.wordpress-dev.tls: "true"
+      traefik.http.routers.wordpress-dev.tls.certresolver: letsencrypt
+      traefik.http.routers.wordpress-dev.rule: Host(`${APP_URL}`)
+      traefik.http.routers.wordpress-dev.service: webapp-service-dev
+      traefik.http.services.wordpress-dev.loadbalancer.server.port: "80"
+  wpcli:
+    image: wordpress:cli-php8.2
+    container_name: tabligh-wpcli
+    depends_on: [db, wordpress]
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_NAME=${DB_NAME}
+      - WORDPRESS_DB_USER=${DB_USER}
+      - WORDPRESS_DB_PASSWORD=${DB_PASSWORD}
+      - WORDPRESS_TABLE_PREFIX=${DB_PREFIX}
+    user: "33:33" # www-data
+    working_dir: /var/www/html
+    entrypoint: ["bash", "-lc", "sleep infinity"]
+    volumes:
+      - ./wp_data:/var/www/html
+    networks: [sitama]
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: tabligh-phpmyadmin
+    restart: unless-stopped
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+      - PMA_ARBITRARY=1
+      - PMA_USER=${DB_USER}
+      - PMA_PASSWORD=${DB_PASSWORD}
+    ports:
+      - 8080:80
+    networks: [sitama]
+    depends_on:
+      db:
+        condition: service_healthy
