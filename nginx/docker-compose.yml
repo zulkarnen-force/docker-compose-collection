@@ -1,19 +1,21 @@
 networks:
   default:
-    name: nginx_net
+    name: web
+    external: true
 
 services:
   nginx:
-    image: nginx:latest
+    image: nginx:1.28-alpine
     container_name: nginx
+    restart: unless-stopped
     ports:
-      - "80:80"    # HTTP
-      - "443:443"  # HTTPS
-    volumes:
-      - ./conf.d:/etc/nginx/conf.d/  # Nginx config
-      - ./ssl:/etc/nginx/ssl/               # SSL certificates
-      - ./logs:/var/log/nginx
-      - ./letsencrypt:/etc/letsencrypt
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - "80:80" # HTTP
+      - "443:443" # HTTPS
+    # volumes:
+    #   - ./conf.d:/etc/nginx/conf.d/  # Nginx config
+    #   - ./ssl:/etc/nginx/ssl/               # SSL certificates
+    #   - ./logs:/var/log/nginx
+    #   - ./letsencrypt:/etc/letsencrypt
+    #   - ./nginx.conf:/etc/nginx/nginx.conf
     networks:
       - default

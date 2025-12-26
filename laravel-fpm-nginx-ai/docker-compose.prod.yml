@@ -1,0 +1,159 @@
+services:
+  # ===========================================
+  # Application (Production)
+  # ===========================================
+  app:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+      target: production
+      args:
+        PHP_VERSION: "8.3"
+        NODE_VERSION: "20"
+    container_name: jav-app-prod
+    restart: always
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      AUTO_MIGRATE: "true"
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-jav}
+      DB_USERNAME: ${DB_USERNAME:-jav}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+    ports:
+      - "${APP_PORT:-80}:80"
+    networks:
+      - jav-network-prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+
+  # ===========================================
+  # PostgreSQL Database (Production)
+  # ===========================================
+  postgres:
+    image: postgres:16.2-alpine
+    container_name: jav-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-jav}
+      POSTGRES_USER: ${DB_USERNAME:-jav}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres-data-prod:/var/lib/postgresql/data
+      - ./.docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - jav-network-prod
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-jav} -d ${DB_DATABASE:-jav}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  # ===========================================
+  # Redis Cache (Production)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: jav-redis-prod
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data-prod:/data
+    networks:
+      - jav-network-prod
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+  # ===========================================
+  # Scheduler (Production - Laravel Task Scheduling)
+  # ===========================================
+  scheduler:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+      target: production
+    container_name: jav-scheduler-prod
+    restart: always
+    environment:
+      APP_ENV: production
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-jav}
+      DB_USERNAME: ${DB_USERNAME:-jav}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    command:
+      [
+        "sh",
+        "-c",
+        "while true; do php artisan schedule:run --verbose --no-interaction & sleep 60; done",
+      ]
+    networks:
+      - jav-network-prod
+    depends_on:
+      - app
+      - postgres
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+networks:
+  jav-network-prod:
+    driver: bridge
+
+volumes:
+  postgres-data-prod:
+  redis-data-prod:
