@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  backup:
+    image: zulkarnen/rclone
+    container_name: folder-backup
+    volumes:
+      - ./test:/data:ro
+      - ./config/rclone.conf:/root/.config/rclone/rclone.conf:ro
+    environment:
+      BACKUP_REMOTE: "PCloudFckZrx:backups/test"
+      BACKUP_RETENTION: "7"
+    # command: >
+    #   bash -c 'curl -sL https://raw.githubusercontent.com/zulkarnen-force/bash-scripting/main/backup/folder.py |
+    #   python3 - --folder /data --remote PCloudFckZrx:backups/test --retention 3 --exclude=docker/'

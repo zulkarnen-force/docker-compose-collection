@@ -1,0 +1,2 @@
+# daily at 02:00
+0 2 * * * /opt/backup/run-backup.sh >> /var/log/backup.log 2>&1
